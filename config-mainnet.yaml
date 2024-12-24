@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./node_modules/envio/fuel.schema.json
+name: envio-indexer
+ecosystem: fuel
+networks:
+  - id: 9889
+    start_block: 0
+    contracts:
+      - name: Mira
+        address:
+          - 0x2e40f2b244b98ed6b8204b3de0156c6961f98525c8162f80162fcf53eebd90e7
+        abi_file_path: abis/mainnet/mira-abi.json
+        handler: src/EventHandlers.ts
+        events:
+          - name: MintEvent
+          - name: BurnEvent
+          - name: CreatePoolEvent
+          - name: SwapEvent
+raw_events: true

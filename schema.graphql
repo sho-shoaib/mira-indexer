@@ -1,0 +1,128 @@
+enum TransactionType {
+    ADD_LIQUIDITY
+    REMOVE_LIQUIDITY
+    SWAP
+}
+
+type Pool {
+    id: ID!
+    asset_0: String!
+    asset_1: String!
+    is_stable: Boolean!
+    reserve_0: BigInt!
+    reserve_1: BigInt!
+    create_time: Int!
+    decimals_0: Int!
+    decimals_1: Int!
+}
+
+type Transaction {
+    id: ID!
+    transaction_type: TransactionType! @index
+    pool_id: String! @index
+    initiator: String! @index
+    is_contract_initiator: Boolean!
+    asset_0_in: BigInt!
+    asset_0_out: BigInt!
+    asset_1_in: BigInt!
+    asset_1_out: BigInt!
+    block_time: Int! @index
+    extra: String
+    lp_id: String
+    lp_amount: BigInt
+}
+
+type SwapDaily {
+    id: ID!
+    pool_id: String! @index
+    snapshot_time: Int! @index
+    count: Int!
+    asset_0_in: BigInt!
+    asset_0_out: BigInt!
+    asset_1_in: BigInt!
+    asset_1_out: BigInt!
+}
+
+type SwapHourly {
+    id: ID!
+    pool_id: String! @index
+    snapshot_time: Int! @index
+    count: Int!
+    asset_0_in: BigInt!
+    asset_0_out: BigInt!
+    asset_1_in: BigInt!
+    asset_1_out: BigInt!
+}
+
+type DeDuplicator {
+  id: ID!
+  additionalDuplications: Int!
+}
+
+type RawCreatePoolEvent {
+  id: ID!
+  pool_id: String!
+  decimals_0: Int!
+  decimals_1: Int!
+  logIndex: Int!
+  transactionId: String!
+  blockId: String! 
+  blockHeight: Int!
+}
+
+type RawMintEvent {
+  id: ID!
+  pool_id: String!
+  recipient: String!
+  liquidity: String!
+  asset_0_in: BigInt!
+  asset_1_in: BigInt!
+  logIndex: Int!
+  transactionId: String!
+  blockId: String!
+  blockHeight: Int!
+}
+
+type RawBurnEvent {
+  id: ID!
+  pool_id: String!
+  recipient: String!
+  liquidity: String!
+  asset_0_out: BigInt!
+  asset_1_out: BigInt!
+  logIndex: Int!
+  transactionId: String!
+  blockId: String!
+  blockHeight: Int!
+}
+
+type RawSwapEvent { 
+  id: ID!
+  pool_id: String!
+  recipient: String!
+  asset_0_in: BigInt!
+  asset_1_in: BigInt!
+  asset_0_out: BigInt!
+  asset_1_out: BigInt!
+  logIndex: Int!
+  transactionId: String!
+  blockId: String!
+  blockHeight: Int!
+}
+
+type CurveViolation {
+    id: ID!
+    tx_id: String!
+    pool_id: String!
+    block_time: Int!
+    reserve_0: BigInt!
+    reserve_1: BigInt!
+    new_reserve_0: BigInt!
+    new_reserve_1: BigInt!
+    asset_0_in: BigInt!
+    asset_1_in: BigInt!
+    asset_0_out: BigInt!
+    asset_1_out: BigInt!
+    k_0: String!
+    k_1: String!
+}
