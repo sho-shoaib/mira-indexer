@@ -14,6 +14,12 @@ type Pool {
     create_time: Int!
     decimals_0: Int!
     decimals_1: Int!
+    tvl: BigInt!
+}
+
+type Asset {
+  id: ID!
+  price: BigInt!
 }
 
 type Transaction {
@@ -41,6 +47,7 @@ type SwapDaily {
     asset_0_out: BigInt!
     asset_1_in: BigInt!
     asset_1_out: BigInt!
+    fees: BigInt!
 }
 
 type SwapHourly {

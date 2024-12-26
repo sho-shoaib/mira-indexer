@@ -170,6 +170,20 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         return;
     }
 
+    const newAsset = {
+        id: event.params.pool_id[0].bits,
+        price: 0n
+    }
+
+    context.Asset.set(newAsset);
+
+    const newAsset2 = {
+        id: event.params.pool_id[1].bits,
+        price: 0n
+    }
+
+    context.Asset.set(newAsset2);
+
     const pool = {
         id: poolIdToStr(event.params.pool_id),
         asset_0: event.params.pool_id[0].bits,
@@ -179,7 +193,8 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         reserve_1: 0n,
         create_time: event.block.time,
         decimals_0: event.params.decimals_0,
-        decimals_1: event.params.decimals_1
+        decimals_1: event.params.decimals_1,
+        tvl: 0n
     };
     context.Pool.set(pool);
 });
@@ -215,6 +230,7 @@ Mira.MintEvent.handler(async ({event, context}) => {
         context.log.error(`Pool ${poolId} not found but received MintEvent`);
         return;
     }
+
     context.Pool.set({
         id: poolId,
         asset_0: event.params.pool_id[0].bits,
@@ -225,6 +241,7 @@ Mira.MintEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
+        tvl: (pool?.tvl ?? 0n) + event.params.asset_0_in + event.params.asset_1_in
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -285,6 +302,7 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
+        tvl: (pool?.tvl ?? 0n) - event.params.asset_0_out - event.params.asset_1_out
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -348,6 +366,30 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         return;
     }
 
+    const is_buy = event.params.asset_1_in > 0;
+  const is_sell = event.params.asset_1_out > 0
+
+  let exchange_rate = BigInt(0)
+
+  try {
+    if (is_buy) {
+      exchange_rate = (BigInt(event.params.asset_1_in) * BigInt(10n ** 18n)) / BigInt(event.params.asset_0_out)
+    } else {
+      exchange_rate = (BigInt(event.params.asset_1_out) * BigInt(10n ** 18n)) / BigInt(event.params.asset_0_in)
+    }
+  } catch (error) {
+    console.log("error calculating exchange rate", error);
+  }
+
+    const updatedAsset = {
+        id: event.params.pool_id[1].bits,
+        price: exchange_rate
+    }
+
+    context.Asset.set(updatedAsset)
+
+    
+
     const updatedPool = {
         id: poolId,
         asset_0: event.params.pool_id[0].bits,
@@ -358,6 +400,7 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
+        tvl: (pool?.tvl ?? 0n) + (event.params.asset_0_in - event.params.asset_0_out) + (event.params.asset_1_in - event.params.asset_1_out)
     }
 
     context.Pool.set(updatedPool);
@@ -389,6 +432,7 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_0_out: (dailySnapshot?.asset_0_out ?? 0n) + event.params.asset_0_out,
         asset_1_in: (dailySnapshot?.asset_1_in ?? 0n) + event.params.asset_1_in,
         asset_1_out: (dailySnapshot?.asset_1_out ?? 0n) + event.params.asset_1_out,
+        fees: calculateFee(event.params.pool_id, event.params.asset_0_in, AMM_FEES) + calculateFee(event.params.pool_id, event.params.asset_1_in, AMM_FEES) 
     });
 
     context.SwapHourly.set({
