@@ -148,6 +148,83 @@ const shouldReturnEarlyDueToDuplicate = async (duplicateId: string, context: Con
     }
 }
 
+const USDC_ID = "0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b"
+const ETH_ID = "0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07"
+const ETH_PRICE_USD = 3364.34
+
+const toDecimal = (amount: number, decimals: number): number => {
+    return Number(amount) / Math.pow(10, decimals);
+};
+
+async function calculatePoolTVL(
+    context: Context,
+    pool: Pool,
+    reserve0: bigint,
+    reserve1: bigint
+): Promise<{ tvl: bigint; tvlUSD: number | null }> {
+    const tvl = reserve0 + reserve1;
+    
+    // For USDC pairs
+    if (pool.asset_0 === USDC_ID || pool.asset_1 === USDC_ID) {
+        if (pool.asset_0 === USDC_ID) {
+            // USDC is token0
+            const usdcValue = toDecimal(Number(reserve0), pool.decimals_0) * 1;
+            const tokenValue = (usdcValue) / Number(reserve1)
+            
+            // Save token1's price in USD
+            context.Asset.set({
+                id: pool.asset_1,
+                price_usd: tokenValue, // Convert to price per token
+            });
+
+            return { tvl, tvlUSD: usdcValue + (tokenValue) };
+        } else {
+            // USDC is token1
+            const usdcValue = toDecimal(Number(reserve1), pool.decimals_1) * 1
+            const tokenValue = (usdcValue) / Number(reserve0);
+            
+            // Save token0's price in USD
+            context.Asset.set({
+                id: pool.asset_0,
+                price_usd: tokenValue
+            });
+
+            return { tvl, tvlUSD: usdcValue + tokenValue  };
+        }
+    }
+
+        // For ETH pairs
+        if (pool.asset_0 === ETH_ID || pool.asset_1 === ETH_ID) {
+            if (pool.asset_0 === ETH_ID) {
+                // ETH is token0
+                const ethValue = toDecimal(Number(reserve0), pool.decimals_0) * ETH_PRICE_USD;
+                const tokenValue = (ethValue) / Number(reserve1);
+                
+                // Save token1's price in USD
+                context.Asset.set({
+                    id: pool.asset_1,
+                    price_usd: tokenValue,
+                });
+
+                return { tvl, tvlUSD: ethValue + (tokenValue ) };
+            } else {
+                // ETH is token1
+                const ethValue = toDecimal(Number(reserve1), pool.decimals_1) * ETH_PRICE_USD;
+                const tokenValue = (ethValue) / Number(reserve0);
+                
+                // Save token0's price in USD
+                context.Asset.set({
+                    id: pool.asset_0,
+                    price_usd: tokenValue,
+                });
+
+                return { tvl, tvlUSD: ethValue + (tokenValue ) };
+            }
+        }
+
+    return { tvl, tvlUSD: null };
+}
+
 Mira.CreatePoolEvent.handler(async ({event, context}) => {
     // Save a raw event
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
@@ -172,14 +249,14 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
 
     const newAsset = {
         id: event.params.pool_id[0].bits,
-        price: 0n
+        price_usd: 0
     }
 
     context.Asset.set(newAsset);
 
     const newAsset2 = {
         id: event.params.pool_id[1].bits,
-        price: 0n
+        price_usd: 0
     }
 
     context.Asset.set(newAsset2);
@@ -194,7 +271,8 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         create_time: event.block.time,
         decimals_0: event.params.decimals_0,
         decimals_1: event.params.decimals_1,
-        tvl: 0n
+        tvl: 0n,
+        tvlUSD: 0
     };
     context.Pool.set(pool);
 });
@@ -231,6 +309,16 @@ Mira.MintEvent.handler(async ({event, context}) => {
         return;
     }
 
+    const new_reserve_0 = (pool?.reserve_0 ?? 0n) + event.params.asset_0_in
+    const new_reserve_1 = (pool?.reserve_1 ?? 0n) + event.params.asset_1_in
+
+    const { tvl, tvlUSD } = await calculatePoolTVL(
+        context,
+        pool,
+        new_reserve_0,
+        new_reserve_1
+    );
+
     context.Pool.set({
         id: poolId,
         asset_0: event.params.pool_id[0].bits,
@@ -241,7 +329,8 @@ Mira.MintEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
-        tvl: (pool?.tvl ?? 0n) + event.params.asset_0_in + event.params.asset_1_in
+        tvl: tvl,
+        tvlUSD: tvlUSD ? tvlUSD : 0
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -292,6 +381,17 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         context.log.error(`Pool ${poolId} not found but received BurnEvent`);
         return;
     }
+
+    const new_reserve_0 = (pool?.reserve_0 ?? 0n) - event.params.asset_0_out
+    const new_reserve_1 = (pool?.reserve_1 ?? 0n) - event.params.asset_1_out
+
+    const { tvl, tvlUSD } = await calculatePoolTVL(
+        context,
+        pool,
+        new_reserve_0,
+        new_reserve_1
+    );
+
     context.Pool.set({
         id: poolId,
         asset_0: event.params.pool_id[0].bits,
@@ -302,7 +402,8 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
-        tvl: (pool?.tvl ?? 0n) - event.params.asset_0_out - event.params.asset_1_out
+        tvl: tvl,
+        tvlUSD: tvlUSD ? tvlUSD : 0
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -381,14 +482,15 @@ Mira.SwapEvent.handler(async ({event, context}) => {
     console.log("error calculating exchange rate", error);
   }
 
-    const updatedAsset = {
-        id: event.params.pool_id[1].bits,
-        price: exchange_rate
-    }
+    const new_reserve_0 = (pool?.reserve_0 ?? 0n) + event.params.asset_0_in - event.params.asset_0_out
+    const new_reserve_1 = (pool?.reserve_1 ?? 0n) + event.params.asset_1_in - event.params.asset_1_out
 
-    context.Asset.set(updatedAsset)
-
-    
+    const { tvl, tvlUSD } = await calculatePoolTVL(
+        context,
+        pool,
+        new_reserve_0,
+        new_reserve_1
+    );
 
     const updatedPool = {
         id: poolId,
@@ -400,7 +502,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         create_time: pool?.create_time ?? event.block.time,
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
-        tvl: (pool?.tvl ?? 0n) + (event.params.asset_0_in - event.params.asset_0_out) + (event.params.asset_1_in - event.params.asset_1_out)
+        tvl: tvl,
+        tvlUSD: tvlUSD ? tvlUSD : 0
     }
 
     context.Pool.set(updatedPool);

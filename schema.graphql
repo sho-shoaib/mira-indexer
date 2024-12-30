@@ -15,11 +15,12 @@ type Pool {
     decimals_0: Int!
     decimals_1: Int!
     tvl: BigInt!
+    tvlUSD: Float!
 }
 
 type Asset {
   id: ID!
-  price: BigInt!
+  price_usd: Float!
 }
 
 type Transaction {
