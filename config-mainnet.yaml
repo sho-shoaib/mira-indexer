@@ -7,7 +7,7 @@ networks:
     contracts:
       - name: Mira
         address:
-          - 0x2e40f2b244b98ed6b8204b3de0156c6961f98525c8162f80162fcf53eebd90e7
+          - 0x3f0f8628d6c59d5f78be5e6b573c74d5112f601e367b90763217439225ab4940
         abi_file_path: abis/mainnet/mira-abi.json
         handler: src/EventHandlers.ts
         events:

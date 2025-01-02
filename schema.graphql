@@ -48,7 +48,7 @@ type SwapDaily {
     asset_0_out: BigInt!
     asset_1_in: BigInt!
     asset_1_out: BigInt!
-    fees: BigInt!
+    feesUSD: Float!
 }
 
 type SwapHourly {
@@ -60,6 +60,7 @@ type SwapHourly {
     asset_0_out: BigInt!
     asset_1_in: BigInt!
     asset_1_out: BigInt!
+    feesUSD: Float!
 }
 
 type DeDuplicator {
