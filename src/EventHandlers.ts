@@ -161,6 +161,10 @@ const toDecimal = (amount: BN, decimals: number): BN => {
     return new BN(amount.div(divisor)); 
 };
 
+const toDecimalNum = (amount: number, decimals: number): number => {
+    return amount / Math.pow(10, decimals)
+}
+
 setTimeout(async function() {
     try {
         const url = 'https://coins.llama.fi/prices/current/fuel:0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b,fuel:0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07,fuel:0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82'
@@ -194,64 +198,64 @@ setTimeout(async function() {
 //     }
 // }
 
-function getVolume(event: any, pool: Pool): bigint {
+function getVolume(event: any, pool: Pool): number {
     if (event.params.asset_0_in > 0n) {
         if (pool.asset_0 === USDC_ID) {
             console.log("Asset 0 in USDC");
             
-            const usdcAmt = toDecimal(new BN(event.params.asset_0_in.toString()), pool.decimals_0)
-            console.log(BigInt(usdcAmt.toString()));
-            const totalVol = usdcAmt.muln(2 * USDC_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const usdcAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
+            console.log(usdcAmt);
+            const totalVol = usdcAmt * 2 * USDC_PRICE_USD 
+            console.log(totalVol);
 
-            return BigInt(usdcAmt.toString())
+            return totalVol
         } else if (pool.asset_0 === ETH_ID) {
             console.log("Asset 0 in ETH");
-            const ethAmt = toDecimal(new BN(event.params.asset_0_in.toString()), pool.decimals_0)
-            console.log(BigInt(ethAmt.toString()));
-            const totalVol = ethAmt.muln(2 * ETH_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const ethAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
+            console.log(ethAmt);
+            const totalVol = ethAmt * 2 * ETH_PRICE_USD 
+            console.log(totalVol);
 
-            return BigInt(ethAmt.toString())
+            return totalVol
         } else if (pool.asset_0 === FUEL_ID) {
             console.log("Asset 0 in FUEL");
-            const fuelAmt = toDecimal(new BN(event.params.asset_0_in.toString()), pool.decimals_0)
-            console.log(BigInt(fuelAmt.toString()));
-            const totalVol = fuelAmt.muln(2 * FUEL_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const fuelAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
+            console.log(fuelAmt);
+            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
+            console.log(totalVol);
 
-            return BigInt(fuelAmt.toString())
+            return totalVol
         }
     } else if (event.params.asset_1_in > 0n) {
         if (pool.asset_1 === USDC_ID) {
             console.log("Asset 1 in USDC");
-            const usdcAmt = toDecimal(new BN(event.params.asset_1_in.toString()), pool.decimals_1)
-            console.log(BigInt(usdcAmt.toString()));
-            const totalVol = usdcAmt.muln(2 * USDC_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const usdcAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
+            console.log(usdcAmt);
+            const totalVol = usdcAmt * 2 * USDC_PRICE_USD 
+            console.log(totalVol);
 
-            return BigInt(usdcAmt.toString())
+            return totalVol
         } else if (pool.asset_1 === ETH_ID) {
             console.log("Asset 1 in ETH");
-            const ethAmt = toDecimal(new BN(event.params.asset_1_in.toString()), pool.decimals_1)
-            console.log(BigInt(ethAmt.toString()));
-            const totalVol = ethAmt.muln(2 * ETH_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const ethAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
+            console.log(ethAmt);
+            const totalVol = ethAmt * 2 * ETH_PRICE_USD 
+            console.log(totalVol);
 
-            return BigInt(ethAmt.toString())
+            return totalVol
         } else if (pool.asset_1 === FUEL_ID) {
             console.log("Asset 1 in FUEL");
-            const fuelAmt = toDecimal(new BN(event.params.asset_1_in.toString()), pool.decimals_1)
-            console.log(BigInt(fuelAmt.toString()));
+            const fuelAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
+            console.log(fuelAmt);
             
-            const totalVol = fuelAmt.muln(2 * FUEL_PRICE_USD) 
-            console.log(BigInt(totalVol.toString()));
+            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
+            console.log(totalVol);
             
 
-            return BigInt(fuelAmt.toString())
+            return totalVol
         }
     }
-    return BigInt(0)
+    return 0
 }
 
 async function calculatePoolTVL(
@@ -408,7 +412,7 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         decimals_1: event.params.decimals_1,
         tvl: 0n,
         tvlUSD: 0n,
-        volume: 0n
+        volume: 0
     };
     context.Pool.set(pool);
 });
@@ -827,7 +831,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_0_out: (dailySnapshot?.asset_0_out ?? 0n) + event.params.asset_0_out,
         asset_1_in: (dailySnapshot?.asset_1_in ?? 0n) + event.params.asset_1_in,
         asset_1_out: (dailySnapshot?.asset_1_out ?? 0n) + event.params.asset_1_out,
-        feesUSD: Number(volume) * feeBP
+        feesUSD: Number(volume) * feeBP,
+        volume: volume
     });
 
     context.SwapHourly.set({
@@ -839,7 +844,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_0_out: (hourlySnapshot?.asset_0_out ?? 0n) + event.params.asset_0_out,
         asset_1_in: (hourlySnapshot?.asset_1_in ?? 0n) + event.params.asset_1_in,
         asset_1_out: (hourlySnapshot?.asset_1_out ?? 0n) + event.params.asset_1_out,
-        feesUSD: Number(volume) * feeBP
+        feesUSD: Number(volume) * feeBP,
+        volume: volume
     });
 
     const k0 = kPool(pool);

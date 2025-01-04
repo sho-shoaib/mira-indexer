@@ -16,7 +16,7 @@ type Pool {
     decimals_1: Int!
     tvl: BigInt!
     tvlUSD: BigInt!
-    volume: BigInt!
+    volume: Float!
 }
 
 type Asset {
@@ -50,6 +50,7 @@ type SwapDaily {
     asset_1_in: BigInt!
     asset_1_out: BigInt!
     feesUSD: Float!
+    volume: Float!
 }
 
 type SwapHourly {
@@ -62,6 +63,7 @@ type SwapHourly {
     asset_1_in: BigInt!
     asset_1_out: BigInt!
     feesUSD: Float!
+    volume: Float!
 }
 
 type DeDuplicator {
