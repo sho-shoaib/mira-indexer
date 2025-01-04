@@ -5,11 +5,11 @@ networks:
   - id: 0
     start_block: 0
     hyperfuel_config:
-      url: https://mainnet2.hypersync.xyz
+      url: https://fuel-testnet.hypersync.xyz
     contracts:
       - name: Mira
         address:
-          - 0x51bb9bf2f9df6c3af3a52ca0bad250ce12df40f27f8ea542403230bfda987526
+          - 0x3f0f8628d6c59d5f78be5e6b573c74d5112f601e367b90763217439225ab4940
         abi_file_path: abis/mainnet/mira-abi.json
         handler: src/EventHandlers.ts
         events:
