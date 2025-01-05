@@ -21,7 +21,9 @@ type Pool {
 
 type Asset {
   id: ID!
-  price_usd: Float!
+  exchange_rate_usdc: Float!
+  exchange_rate_eth: Float!
+  exchange_rate_fuel: Float!
 }
 
 type Transaction {

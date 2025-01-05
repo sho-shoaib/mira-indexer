@@ -8,6 +8,7 @@ import {
     handlerContext as Context,
     Transaction,
     Pool,
+    Asset,
 } from "generated";
 import {v4 as uuid} from 'uuid';
 import BN from 'bn.js';
@@ -170,7 +171,6 @@ setTimeout(async function() {
         const url = 'https://coins.llama.fi/prices/current/fuel:0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b,fuel:0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07,fuel:0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82'
     
         const res = await axios.get(url)
-        console.log(res.data.coins);
         
         USDC_PRICE_USD = res.data.coins['fuel:0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b'].price
     
@@ -201,55 +201,52 @@ setTimeout(async function() {
 function getVolume(event: any, pool: Pool): number {
     if (event.params.asset_0_in > 0n) {
         if (pool.asset_0 === USDC_ID) {
-            console.log("Asset 0 in USDC");
             
             const usdcAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
-            console.log(usdcAmt);
-            const totalVol = usdcAmt * 2 * USDC_PRICE_USD 
-            console.log(totalVol);
+
+            const totalVol = usdcAmt * 2 * USDC_PRICE_USD
 
             return totalVol
         } else if (pool.asset_0 === ETH_ID) {
-            console.log("Asset 0 in ETH");
             const ethAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
-            console.log(ethAmt);
+ 
             const totalVol = ethAmt * 2 * ETH_PRICE_USD 
-            console.log(totalVol);
+  
 
             return totalVol
         } else if (pool.asset_0 === FUEL_ID) {
-            console.log("Asset 0 in FUEL");
+          
             const fuelAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
-            console.log(fuelAmt);
+        
             const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
-            console.log(totalVol);
+        
 
             return totalVol
         }
     } else if (event.params.asset_1_in > 0n) {
         if (pool.asset_1 === USDC_ID) {
-            console.log("Asset 1 in USDC");
+           
             const usdcAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-            console.log(usdcAmt);
+            
             const totalVol = usdcAmt * 2 * USDC_PRICE_USD 
-            console.log(totalVol);
+       
 
             return totalVol
         } else if (pool.asset_1 === ETH_ID) {
-            console.log("Asset 1 in ETH");
+         
             const ethAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-            console.log(ethAmt);
+   
             const totalVol = ethAmt * 2 * ETH_PRICE_USD 
-            console.log(totalVol);
+     
 
             return totalVol
         } else if (pool.asset_1 === FUEL_ID) {
-            console.log("Asset 1 in FUEL");
+      
             const fuelAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-            console.log(fuelAmt);
+     
             
             const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
-            console.log(totalVol);
+    
             
 
             return totalVol
@@ -342,63 +339,6 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         context.log.error(`Return Early due to duplicate in CreatePoolEvent - tx: ${event.transaction.id}`);
         return;
     }
-
-    let newAsset0 = {
-        id: event.params.pool_id[0].bits,
-        price_usd: 0,
-        exchange_rate: 0
-    }
-
-    let newAsset1 = {
-        id: event.params.pool_id[1].bits,
-        price_usd: 0,
-        exchange_rate: 0
-    }
-
-    if (event.params.pool_id[0].bits === USDC_ID) {
-        newAsset0 = {
-            id: event.params.pool_id[0].bits,
-            price_usd: USDC_PRICE_USD,
-            exchange_rate: 0
-        }
-    } else if (event.params.pool_id[1].bits === USDC_ID) {
-        newAsset1 = {
-            id: event.params.pool_id[1].bits,
-            price_usd: USDC_PRICE_USD,
-            exchange_rate: 0
-        }
-    }
-
-    if (event.params.pool_id[0].bits === ETH_ID) {
-        newAsset0 = {
-            id: event.params.pool_id[0].bits,
-            price_usd: ETH_PRICE_USD,
-            exchange_rate: 0
-        }
-    } else if (event.params.pool_id[1].bits === ETH_ID) {
-        newAsset1 = {
-            id: event.params.pool_id[1].bits,
-            price_usd: ETH_PRICE_USD,
-            exchange_rate: 0
-        }
-    }
-
-    if (event.params.pool_id[0].bits === FUEL_ID) {
-        newAsset0 = {
-            id: event.params.pool_id[0].bits,
-            price_usd: FUEL_PRICE_USD,
-            exchange_rate: 0
-        }
-    } else if (event.params.pool_id[1].bits === FUEL_ID) {
-        newAsset1 = {
-            id: event.params.pool_id[1].bits,
-            price_usd: FUEL_PRICE_USD,
-            exchange_rate: 0
-        }
-    }
-
-    context.Asset.set(newAsset0);
-    context.Asset.set(newAsset1);
 
     const pool = {
         id: poolIdToStr(event.params.pool_id),
@@ -567,6 +507,53 @@ Mira.BurnEvent.handler(async ({event, context}) => {
     await upsertTransaction(context, transaction);
 });
 
+const setAssetExchangeRate = (pool: Pool, asset: Asset | undefined, context: Context, exchange_rate_usdc: number | null, exchange_rate_eth: number | null, exchange_rate_fuel: number | null) => {
+    context.Asset.set({
+        id: pool.asset_1,
+        exchange_rate_usdc: exchange_rate_usdc || asset?.exchange_rate_usdc || 0,
+        exchange_rate_eth: exchange_rate_eth || asset?.exchange_rate_eth || 0,
+        exchange_rate_fuel: exchange_rate_fuel || asset?.exchange_rate_fuel || 0
+    })
+}
+
+const setExchangeRate = async (Asset0: number, Asset1: number, pool: Pool, context: Context) => {
+    if (pool.asset_0 === USDC_ID) {
+        const asset = await context.Asset.get(pool.asset_1)
+        const exchange_rate_usdc = Asset0 / Asset1
+
+        setAssetExchangeRate(pool, asset, context, exchange_rate_usdc, null, null)
+    } else if (pool.asset_1 === USDC_ID) {
+        const asset = await context.Asset.get(pool.asset_0)
+        const exchange_rate_usdc = Asset1 / Asset0
+
+        setAssetExchangeRate(pool, asset, context, exchange_rate_usdc, null, null)
+    }
+
+    if (pool.asset_0 === ETH_ID) {
+        const asset = await context.Asset.get(pool.asset_1)
+        const exchange_rate_eth = Asset0 / Asset1
+
+        setAssetExchangeRate(pool, asset, context, null, exchange_rate_eth, null)
+    } else if (pool.asset_1 === ETH_ID) {
+        const asset = await context.Asset.get(pool.asset_0)
+        const exchange_rate_eth = Asset1 / Asset0
+
+        setAssetExchangeRate(pool, asset, context, null, exchange_rate_eth, null)
+    }
+
+    if (pool.asset_0 === FUEL_ID) {
+        const asset = await context.Asset.get(pool.asset_1)
+        const exchange_rate_fuel = Asset0 / Asset1
+
+        setAssetExchangeRate(pool, asset, context, null, null, exchange_rate_fuel)
+    } else if (pool.asset_1 === FUEL_ID) {
+        const asset = await context.Asset.get(pool.asset_0)
+        const exchange_rate_fuel = Asset1 / Asset0
+
+        setAssetExchangeRate(pool, asset, context, null, null, exchange_rate_fuel)
+    }
+}
+
 Mira.SwapEvent.handler(async ({event, context}) => {
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
     const rawEvent = {
@@ -610,161 +597,36 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         return;
     }
 
-    
-
     const new_reserve_0 = (pool?.reserve_0 ?? 0n) + event.params.asset_0_in - event.params.asset_0_out
     const new_reserve_1 = (pool?.reserve_1 ?? 0n) + event.params.asset_1_in - event.params.asset_1_out
+
+    if (event.params.asset_0_in > 0n) {
+        const Asset0 = Number(event.params.asset_0_in)
+        const Asset1 = Number(event.params.asset_1_out)
+
+        setExchangeRate(Asset0, Asset1, pool, context)
+    } else if (event.params.asset_1_in > 0n) {
+        const Asset0 = Number(event.params.asset_1_in)
+        const Asset1 = Number(event.params.asset_0_out)
+        
+        setExchangeRate(Asset0, Asset1, pool, context)
+    }
+
+    const volume = getVolume(event, pool)
 
     // const is_buy = event.params.asset_1_in > 0n;
     // const is_sell = event.params.asset_1_out > 0n
   
     // let exchange_rate = BigInt(0)
-    // let price1
-  
-    // try {
-    //     if (pool.asset_0 === USDC_ID || pool.asset_1 === USDC_ID) {
-    //         context.Asset.set({
-    //             id: USDC_ID,
-    //             price_usd: USDC_PRICE_USD, // 1
-    //             exchange_rate: 1
-    //         });
-    //     }
-        
-    //     if (pool.asset_0 === ETH_ID || pool.asset_1 === ETH_ID) {
-    //         context.Asset.set({
-    //             id: ETH_ID,
-    //             price_usd: ETH_PRICE_USD, // 3364
-    //             exchange_rate: ETH_PRICE_USD
-    //         });
-    //     }        
-
     //   if (is_buy) {
     //     console.log(event.params.asset_1_in, event.params.asset_0_out, "in n out");
         
     //     exchange_rate = (BigInt(event.params.asset_0_out)  * BigInt(10n ** 18n)) / BigInt(event.params.asset_1_in)
 
-        
-    //     const ratio = toDecimal(Number(exchange_rate), 18)
-
-    //     console.log(ratio, ratio * Number(event.params.asset_0_out), event.params.asset_1_in);
-        
-    //     console.log(`For 1 asset0 I will get ${ratio * 1} asset1`);
-
-    //     if (pool.asset_1 === USDC_ID) {
-    //         console.log("Asset 1 is usdc");
-
-    //         const asset = await context.Asset.get(event.params.pool_id[1].bits)
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         console.log(`For 1 asset0 I will get ${ratio * 1} USDC (asset1)`);
-    //         console.log(`price of 1 asset0 is ${ratio * 1 * USDC_PRICE_USD}`);
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[0].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_0 === USDC_ID) {
-    //         console.log("Asset 0 is usdc");
-            
-    //         const asset = await context.Asset.get(event.params.pool_id[0].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[1].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_1 === ETH_ID) {
-    //         const asset = await context.Asset.get(event.params.pool_id[1].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         console.log(`For 1 asset0 I will get ${ratio * 1} ETH (asset1)`);
-    //         console.log(`price of 1 asset0 is ${ratio * 1 * ETH_PRICE_USD}`);
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[0].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_0 === ETH_ID) {
-    //         console.log("Asset 0 is ETH");
-    //         const asset = await context.Asset.get(event.params.pool_id[0].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[1].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     }
-         
-        
-  
-    //     //  price1 = (new_reserve_0 * event.params.asset_1_in) / (new_reserve_1 + event.params.asset_1_in)
     //   } else if (is_sell) {
     //     console.log(event.params.asset_1_out, event.params.asset_0_in, "out n in");
     //     exchange_rate = (BigInt(event.params.asset_1_out)  * BigInt(10n ** 18n)) / BigInt(event.params.asset _0_in) 
 
-    //     const ratio = toDecimal(Number(exchange_rate), 18)
-
-    //     console.log(ratio, ratio * Number(event.params.asset_0_in), event.params.asset_1_out);
-
-    //     if (pool.asset_1 === USDC_ID) {
-    //         console.log("Asset 1 is usdc");
-
-    //         const asset = await context.Asset.get(event.params.pool_id[1].bits)
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         console.log(`For 1 asset0 I will get ${ratio * 1} USDC (asset1)`);
-    //         console.log(`price of 1 asset0 is ${ratio * 1 * USDC_PRICE_USD}`);
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[0].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_0 === USDC_ID) {
-    //         console.log("Asset 0 is usdc");
-            
-    //         const asset = await context.Asset.get(event.params.pool_id[0].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[1].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_1 === ETH_ID) {
-    //         const asset = await context.Asset.get(event.params.pool_id[1].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         console.log(`For 1 asset0 I will get ${ratio * 1} ETH (asset1)`);
-    //         console.log(`price of 1 asset0 is ${ratio * 1 * ETH_PRICE_USD}`);
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[0].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     } else if (pool.asset_0 === ETH_ID) {
-    //         console.log("Asset 0 is ETH");
-    //         const asset = await context.Asset.get(event.params.pool_id[0].bits)!
-    //         const price_usd = (1 / ratio) * asset!.price_usd
-
-    //         context.Asset.set({
-    //             id: event.params.pool_id[1].bits,
-    //             price_usd,
-    //             exchange_rate: ratio
-    //         })
-    //     }
-        
-        
-
-    //     //  price1 = (new_reserve_0 * event.params.asset_1_out) / (new_reserve_1 - event.params.asset_1_out)
-    //   }
-  
-    //   // setAsset(context, event.params.pool_id[0].bits, event.params.pool_id[1].bits, toDecimal(Number(exchange_rate), pool.decimals_1))
     // } catch (error) {
     //   console.log("error calculating exchange rate", error);
     // }
@@ -775,13 +637,6 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         new_reserve_0,
         new_reserve_1
     );
-
-    console.log(event.params.asset_0_in, event.params.asset_1_in, event.params.asset_0_out, event.params.asset_1_out);
-    
-    const volume = getVolume(event, pool)
-    console.log(volume);
-    console.log(pool?.volume);
-    
 
     const updatedPool = {
         id: poolId,
@@ -831,8 +686,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_0_out: (dailySnapshot?.asset_0_out ?? 0n) + event.params.asset_0_out,
         asset_1_in: (dailySnapshot?.asset_1_in ?? 0n) + event.params.asset_1_in,
         asset_1_out: (dailySnapshot?.asset_1_out ?? 0n) + event.params.asset_1_out,
-        feesUSD: Number(volume) * feeBP,
-        volume: volume
+        feesUSD: (dailySnapshot?.feesUSD ?? 0) + (Number(volume) * feeBP),
+        volume: (dailySnapshot?.volume ?? 0) + volume
     });
 
     context.SwapHourly.set({
@@ -844,8 +699,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_0_out: (hourlySnapshot?.asset_0_out ?? 0n) + event.params.asset_0_out,
         asset_1_in: (hourlySnapshot?.asset_1_in ?? 0n) + event.params.asset_1_in,
         asset_1_out: (hourlySnapshot?.asset_1_out ?? 0n) + event.params.asset_1_out,
-        feesUSD: Number(volume) * feeBP,
-        volume: volume
+        feesUSD: (hourlySnapshot?.feesUSD ?? 0) + (Number(volume) * feeBP),
+        volume: (hourlySnapshot?.volume ?? 0) + volume
     });
 
     const k0 = kPool(pool);
