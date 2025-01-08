@@ -352,7 +352,8 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         decimals_1: event.params.decimals_1,
         tvl: 0n,
         tvlUSD: 0n,
-        volume: 0
+        volume: 0,
+        lp_id: event.params.liquidity.id.bits ?? 'n/a',
     };
     context.Pool.set(pool);
 });
@@ -412,7 +413,8 @@ Mira.MintEvent.handler(async ({event, context}) => {
         decimals_1: pool?.decimals_1,
         tvl: tvl,
         tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume ?? 0n
+        volume: pool?.volume ?? 0n,
+        lp_id: event.params.liquidity.id.bits ?? 'n/a',
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -486,7 +488,8 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         decimals_1: pool?.decimals_1,
         tvl: tvl,
         tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume ?? 0n
+        volume: pool?.volume ?? 0n,
+        lp_id: event.params.liquidity.id.bits ?? 'n/a',
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -567,7 +570,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         logIndex: event.logIndex,
         transactionId: event.transaction.id,
         blockId: event.block.id,
-        blockHeight: event.block.height
+        blockHeight: event.block.height,
+        lp_id: event.params.liquidity.id.bits ?? 'n/a',
     };
     context.RawSwapEvent.set(rawEvent);
 
