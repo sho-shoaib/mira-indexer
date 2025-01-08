@@ -17,6 +17,7 @@ type Pool {
   tvl: BigInt!
   tvlUSD: BigInt!
   volume: Float!
+  lp_id: String!
 }
 
 type Asset {
