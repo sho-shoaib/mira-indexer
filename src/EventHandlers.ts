@@ -667,7 +667,7 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_1_out: event.params.asset_1_out,
         block_time: event.block.time,
         lp_id: 'n/a',
-        lp_amount: 'n/a',
+        lp_amount: 0n,
         extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
