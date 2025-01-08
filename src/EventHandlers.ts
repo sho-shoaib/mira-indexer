@@ -428,7 +428,7 @@ Mira.MintEvent.handler(async ({event, context}) => {
         block_time: event.block.time,
         lp_id: event.params. liquidity.id.bits,
         lp_amount: event.params.liquidity.amount,
-        extra: undefined
+        extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
 });
@@ -502,7 +502,7 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         block_time: event.block.time,
         lp_id: event.params.liquidity.id.bits,
         lp_amount: event.params.liquidity.amount,
-        extra: undefined
+        extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
 });
@@ -666,9 +666,9 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_1_in: event.params.asset_1_in,
         asset_1_out: event.params.asset_1_out,
         block_time: event.block.time,
-        lp_id: undefined,
-        lp_amount: undefined,
-        extra: undefined
+        lp_id: 'n/a',
+        lp_amount: 'n/a',
+        extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
 
