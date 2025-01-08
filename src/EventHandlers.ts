@@ -654,7 +654,8 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         decimals_1: pool?.decimals_1,
         tvl: tvl,
         tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume + volume
+        volume: pool?.volume + volume,
+        lp_id: event.params.liquidity.id.bits ?? 'n/a'
     }
 
     context.Pool.set(updatedPool);
