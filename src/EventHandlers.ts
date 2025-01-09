@@ -10,7 +10,7 @@ import {
     Pool,
     Asset,
 } from "generated";
-import {v4 as uuid} from 'uuid';
+import { v4 as uuid } from 'uuid';
 import BN from 'bn.js';
 import axios from "axios";
 
@@ -141,11 +141,11 @@ async function upsertTransaction(context: Context, transaction: Transaction) {
 const shouldReturnEarlyDueToDuplicate = async (duplicateId: string, context: Context) => {
     const deduplicator = await context.DeDuplicator.get(duplicateId);
     if (deduplicator === undefined) {
-        context.DeDuplicator.set({id: duplicateId, additionalDuplications: 0});
+        context.DeDuplicator.set({ id: duplicateId, additionalDuplications: 0 });
         return false;
     } else {
         // Return Early
-        context.DeDuplicator.set({...deduplicator, additionalDuplications: deduplicator.additionalDuplications + 1});
+        context.DeDuplicator.set({ ...deduplicator, additionalDuplications: deduplicator.additionalDuplications + 1 });
         return true;
     }
 }
@@ -157,23 +157,25 @@ let USDC_PRICE_USD = 1
 let ETH_PRICE_USD = 3364.34
 let FUEL_PRICE_USD = 0.067197
 
-const toDecimal = (amount: BN, decimals: number): BN => {
-    const divisor = new BN(Math.pow(10, decimals))
-    return new BN(amount.div(divisor)); 
-};
+function toDecimal(bnValue: BN, decimals: number) {
+    const divisor = new BN(10).pow(new BN(decimals));
+    const integerPart = bnValue.div(divisor).toString(); // Integer part
+    const fractionalPart = bnValue.mod(divisor).toString().padStart(decimals, '0'); // Fractional part
+    return `${integerPart}.${fractionalPart}`.replace(/\.?0+$/, ''); // Trim trailing zeroes
+}
 
 const toDecimalNum = (amount: number, decimals: number): number => {
     return amount / Math.pow(10, decimals)
 }
 
-setTimeout(async function() {
+setTimeout(async function () {
     try {
         const url = 'https://coins.llama.fi/prices/current/fuel:0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b,fuel:0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07,fuel:0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82'
-    
+
         const res = await axios.get(url)
-        
+
         USDC_PRICE_USD = res.data.coins['fuel:0x286c479da40dc953bddc3bb4c453b608bba2e0ac483b077bd475174115395e6b'].price
-    
+
         ETH_PRICE_USD = res.data.coins['fuel:0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07'].price
 
         FUEL_PRICE_USD = res.data.coins['fuel:0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82'].price
@@ -201,7 +203,7 @@ setTimeout(async function() {
 function getVolume(event: any, pool: Pool): number {
     if (event.params.asset_0_in > 0n) {
         if (pool.asset_0 === USDC_ID) {
-            
+
             const usdcAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
 
             const totalVol = usdcAmt * 2 * USDC_PRICE_USD
@@ -209,45 +211,45 @@ function getVolume(event: any, pool: Pool): number {
             return totalVol
         } else if (pool.asset_0 === ETH_ID) {
             const ethAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
- 
-            const totalVol = ethAmt * 2 * ETH_PRICE_USD 
-  
+
+            const totalVol = ethAmt * 2 * ETH_PRICE_USD
+
 
             return totalVol
         } else if (pool.asset_0 === FUEL_ID) {
-          
+
             const fuelAmt = toDecimalNum(Number(event.params.asset_0_in), pool.decimals_0)
-        
-            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
-        
+
+            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD
+
 
             return totalVol
         }
     } else if (event.params.asset_1_in > 0n) {
         if (pool.asset_1 === USDC_ID) {
-           
+
             const usdcAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-            
-            const totalVol = usdcAmt * 2 * USDC_PRICE_USD 
-       
+
+            const totalVol = usdcAmt * 2 * USDC_PRICE_USD
+
 
             return totalVol
         } else if (pool.asset_1 === ETH_ID) {
-         
+
             const ethAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-   
-            const totalVol = ethAmt * 2 * ETH_PRICE_USD 
-     
+
+            const totalVol = ethAmt * 2 * ETH_PRICE_USD
+
 
             return totalVol
         } else if (pool.asset_1 === FUEL_ID) {
-      
+
             const fuelAmt = toDecimalNum(Number(event.params.asset_1_in), pool.decimals_1)
-     
-            
-            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD 
-    
-            
+
+
+            const totalVol = fuelAmt * 2 * FUEL_PRICE_USD
+
+
 
             return totalVol
         }
@@ -260,65 +262,67 @@ async function calculatePoolTVL(
     pool: Pool,
     reserve0: bigint,
     reserve1: bigint
-): Promise<{ tvl: bigint; tvlUSD: bigint }> {
+): Promise<{ tvl: bigint; tvlUSD: number }> {
     const tvl = reserve0 + reserve1;
-    
+
     // For USDC pairs
     if (pool.asset_0 === USDC_ID || pool.asset_1 === USDC_ID) {
         if (pool.asset_0 === USDC_ID) {
             // USDC is token0
-            const usdcAmt = toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0)
-            const tvlUSD = usdcAmt.muln(2 * USDC_PRICE_USD) 
+            const usdcAmt = Number(toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0))
+            const tvlUSD = usdcAmt * 2 * USDC_PRICE_USD
 
-            return { tvl, tvlUSD: BigInt(tvlUSD.toString())};
+            return { tvl, tvlUSD: tvlUSD };
         } else {
             // USDC is token1
-            const usdcAmt = toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1)
-            const tvlUSD = usdcAmt.muln(2 * USDC_PRICE_USD) 
+            const usdcAmt = Number(toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1))
+            const tvlUSD = usdcAmt * 2 * USDC_PRICE_USD
 
-            return { tvl, tvlUSD: BigInt(tvlUSD.toString())};
+            return { tvl, tvlUSD: tvlUSD };
         }
     }
 
-        // For ETH pairs
-        if (pool.asset_0 === ETH_ID || pool.asset_1 === ETH_ID) {
-            if (pool.asset_0 === ETH_ID) {
-                // ETH is token0
-                const ethAmt = toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0)
-            const tvlUSD = ethAmt.muln(2 * ETH_PRICE_USD)
+    // For ETH pairs
+    if (pool.asset_0 === ETH_ID || pool.asset_1 === ETH_ID) {
+        if (pool.asset_0 === ETH_ID) {
+            // ETH is token0
+            const ethAmt = Number(toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0))
+            const tvlUSD = ethAmt * 2 * ETH_PRICE_USD
 
-                return { tvl, tvlUSD: BigInt(tvlUSD.toString()) };
-            } else {
-                // ETH is token1
-                const ethAmt = toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1)
-                const tvlUSD = ethAmt.muln(2 * ETH_PRICE_USD)
+            return { tvl, tvlUSD: tvlUSD };
+        } else {
 
-                return { tvl, tvlUSD: BigInt(tvlUSD.toString()) };
-            }
+            // ETH is token1
+            const ethAmt = Number(toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1))
+            console.log(pool.reserve_1.toString());
+            const tvlUSD = ethAmt * 2 * ETH_PRICE_USD
+
+            return { tvl, tvlUSD: tvlUSD };
         }
+    }
 
-        // For Fuel Pairs
-        if (pool.asset_0 === FUEL_ID || pool.asset_1 === FUEL_ID) {
-            // Continue here
-            if (pool.asset_0 === FUEL_ID) {
-                // FUEL is token0
-                const fuelAmt =toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0)
-                const tvlUSD = fuelAmt.muln(2 * FUEL_PRICE_USD)
+    // For Fuel Pairs
+    if (pool.asset_0 === FUEL_ID || pool.asset_1 === FUEL_ID) {
+        // Continue here
+        if (pool.asset_0 === FUEL_ID) {
+            // FUEL is token0
+            const fuelAmt = Number(toDecimal(new BN(pool.reserve_0.toString()), pool.decimals_0))
+            const tvlUSD = fuelAmt * 2 * FUEL_PRICE_USD
 
-                return { tvl, tvlUSD: BigInt(tvlUSD.toString()) }
-            } else {
-                // FUEL is token1
-                const fuelAmt = toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1)
-                const tvlUSD = fuelAmt.muln(2 * FUEL_PRICE_USD)
+            return { tvl, tvlUSD: tvlUSD }
+        } else {
+            // FUEL is token1
+            const fuelAmt = Number(toDecimal(new BN(pool.reserve_1.toString()), pool.decimals_1))
+            const tvlUSD = fuelAmt * 2 * FUEL_PRICE_USD
 
-                return { tvl, tvlUSD: BigInt(tvlUSD.toString()) }
-            }
+            return { tvl, tvlUSD: tvlUSD }
         }
+    }
 
-    return { tvl, tvlUSD: 0n };
+    return { tvl, tvlUSD: 0 };
 }
 
-Mira.CreatePoolEvent.handler(async ({event, context}) => {
+Mira.CreatePoolEvent.handler(async ({ event, context }) => {
     // Save a raw event
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
     const rawEvent = {
@@ -351,15 +355,16 @@ Mira.CreatePoolEvent.handler(async ({event, context}) => {
         decimals_0: event.params.decimals_0,
         decimals_1: event.params.decimals_1,
         tvl: 0n,
-        tvlUSD: 0n,
-        volume: 0
+        tvlUSD: 0,
+        volume: 0,
+        lpId: 'n/a'
     };
     context.Pool.set(pool);
 });
 
 
-Mira.MintEvent.handler(async ({event, context}) => {
-    
+Mira.MintEvent.handler(async ({ event, context }) => {
+
     // Save a raw event
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
     const rawEvent = {
@@ -411,9 +416,11 @@ Mira.MintEvent.handler(async ({event, context}) => {
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
         tvl: tvl,
-        tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume ?? 0n
+        tvlUSD: tvlUSD ? tvlUSD : 0,
+        volume: pool?.volume ?? 0n,
+        lpId: event.params.liquidity.id.bits ?? 'n/a'
     });
+
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
         id: event.transaction.id,
@@ -426,14 +433,14 @@ Mira.MintEvent.handler(async ({event, context}) => {
         asset_1_in: event.params.asset_1_in,
         asset_1_out: 0n,
         block_time: event.block.time,
-        lp_id: event.params. liquidity.id.bits,
+        lp_id: event.params.liquidity.id.bits,
         lp_amount: event.params.liquidity.amount,
         extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
 });
 
-Mira.BurnEvent.handler(async ({event, context}) => {
+Mira.BurnEvent.handler(async ({ event, context }) => {
     // Save a raw event
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
     const rawEvent = {
@@ -485,8 +492,9 @@ Mira.BurnEvent.handler(async ({event, context}) => {
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
         tvl: tvl,
-        tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume ?? 0n
+        tvlUSD: tvlUSD ? tvlUSD : 0,
+        volume: pool?.volume ?? 0n,
+        lpId: event.params.liquidity.id.bits ?? 'n/a'
     });
     const [address, isContract] = identityToStr(event.params.recipient);
     const transaction: Transaction = {
@@ -554,7 +562,7 @@ const setExchangeRate = async (Asset0: number, Asset1: number, pool: Pool, conte
     }
 }
 
-Mira.SwapEvent.handler(async ({event, context}) => {
+Mira.SwapEvent.handler(async ({ event, context }) => {
     const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`
     const rawEvent = {
         id: id,
@@ -608,7 +616,7 @@ Mira.SwapEvent.handler(async ({event, context}) => {
     } else if (event.params.asset_1_in > 0n) {
         const Asset0 = Number(event.params.asset_1_in)
         const Asset1 = Number(event.params.asset_0_out)
-        
+
         setExchangeRate(Asset0, Asset1, pool, context)
     }
 
@@ -616,11 +624,11 @@ Mira.SwapEvent.handler(async ({event, context}) => {
 
     // const is_buy = event.params.asset_1_in > 0n;
     // const is_sell = event.params.asset_1_out > 0n
-  
+
     // let exchange_rate = BigInt(0)
     //   if (is_buy) {
     //     console.log(event.params.asset_1_in, event.params.asset_0_out, "in n out");
-        
+
     //     exchange_rate = (BigInt(event.params.asset_0_out)  * BigInt(10n ** 18n)) / BigInt(event.params.asset_1_in)
 
     //   } else if (is_sell) {
@@ -649,8 +657,10 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         decimals_0: pool?.decimals_0,
         decimals_1: pool?.decimals_1,
         tvl: tvl,
-        tvlUSD: tvlUSD ? tvlUSD : 0n,
-        volume: pool?.volume + volume    }
+        tvlUSD: tvlUSD ? tvlUSD : 0,
+        volume: pool?.volume + volume,
+        lpId: pool?.lpId ?? 'n/a'
+    }
 
     context.Pool.set(updatedPool);
 
@@ -666,15 +676,15 @@ Mira.SwapEvent.handler(async ({event, context}) => {
         asset_1_in: event.params.asset_1_in,
         asset_1_out: event.params.asset_1_out,
         block_time: event.block.time,
-        lp_id: 'n/a',
+        lp_id: pool?.lpId ?? 'n/a',
         lp_amount: 0n,
         extra: 'n/a'
     };
     await upsertTransaction(context, transaction);
 
     const feeBP = poolId[2] ?
-    0.05 :
-    0.30;
+        0.05 :
+        0.30;
 
     context.SwapDaily.set({
         id: dailySnapshotId,

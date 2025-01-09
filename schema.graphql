@@ -15,8 +15,9 @@ type Pool {
   decimals_0: Int!
   decimals_1: Int!
   tvl: BigInt!
-  tvlUSD: BigInt!
+  tvlUSD: Float!
   volume: Float!
+  lpId: String!
 }
 
 type Asset {
