@@ -16,7 +16,6 @@ type Pool {
   decimals_1: Int!
   tvl: BigInt!
   tvlUSD: Float!
-  volume: Float!
   lpId: String!
 }
 
@@ -38,9 +37,9 @@ type Transaction {
   asset_1_in: BigInt!
   asset_1_out: BigInt!
   block_time: Int! @index
-  extra: String!
-  lp_id: String!
-  lp_amount: BigInt!
+  extra: String
+  lp_id: String
+  lp_amount: BigInt
 }
 
 type SwapDaily {
