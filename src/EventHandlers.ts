@@ -431,10 +431,30 @@ Mira.CreatePoolEvent.handler(async ({ event, context }) => {
     decimals_1: event.params.decimals_1,
     tvl: 0n,
     tvlUSD: 0,
-    volume: 0,
+    swapVolume: 0,
     lpId: "n-a",
   };
   context.Pool.set(pool);
+
+  const Asset0 = {
+    id: event.params.pool_id[0].bits,
+    exchange_rate_usdc: 0,
+    exchange_rate_eth: 0,
+    exchange_rate_fuel: 0,
+  };
+
+  const Asset1 = {
+    id: event.params.pool_id[1].bits,
+    exchange_rate_usdc: 0,
+    exchange_rate_eth: 0,
+    exchange_rate_fuel: 0,
+  };
+
+  console.log(event.params.pool_id[0].bits, event.params.pool_id[1].bits);
+
+  context.Asset.set(Asset0);
+
+  context.Asset.set(Asset1);
 });
 
 Mira.MintEvent.handler(async ({ event, context }) => {
@@ -495,6 +515,7 @@ Mira.MintEvent.handler(async ({ event, context }) => {
     tvl: tvl,
     tvlUSD: tvlUSD ? tvlUSD : 0,
     lpId: event.params.liquidity.id.bits ?? "n-a",
+    swapVolume: pool?.swapVolume,
   });
 
   const [address, isContract] = identityToStr(event.params.recipient);
@@ -574,6 +595,7 @@ Mira.BurnEvent.handler(async ({ event, context }) => {
     tvl: tvl,
     tvlUSD: tvlUSD ? tvlUSD : 0,
     lpId: event.params.liquidity.id.bits ?? "n-a",
+    swapVolume: pool?.swapVolume,
   });
   const [address, isContract] = identityToStr(event.params.recipient);
   const transaction: Transaction = {
@@ -768,6 +790,7 @@ Mira.SwapEvent.handler(async ({ event, context }) => {
     tvl: tvl,
     tvlUSD: tvlUSD ? tvlUSD : 0,
     lpId: pool?.lpId ?? "n-a",
+    swapVolume: pool?.swapVolume + volume,
   };
 
   context.Pool.set(updatedPool);
