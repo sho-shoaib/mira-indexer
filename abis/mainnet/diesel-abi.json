@@ -110,8 +110,7 @@
     },
     {
       "type": "enum sway_libs::reentrancy::errors::ReentrancyError",
-
-"concreteTypeId": "4d216c57b3357523323f59401c7355785b41bdf832f6e1106272186b94797038",
+      "concreteTypeId": "4d216c57b3357523323f59401c7355785b41bdf832f6e1106272186b94797038",
       "metadataTypeId": 11
     },
     {
@@ -234,8 +233,7 @@
     },
     {
       "type": "(_, _, _)",
-
-"metadataTypeId": 2,
+      "metadataTypeId": 2,
       "components": [
         {
           "name": "__tuple_element",
@@ -382,8 +380,7 @@
       ]
     },
     {
-
-"type": "enum std::identity::Identity",
+      "type": "enum std::identity::Identity",
       "metadataTypeId": 8,
       "components": [
         {
@@ -547,8 +544,7 @@
         },
         {
           "name": "asset_1_in",
-
-"typeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+          "typeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
         }
       ]
     },
@@ -725,8 +721,7 @@
       ]
     },
     {
-
-"type": "struct std::string::String",
+      "type": "struct std::string::String",
       "metadataTypeId": 29,
       "components": [
         {
@@ -902,8 +897,7 @@
         },
         {
           "name": "token_1_contract_id",
-
-"concreteTypeId": "29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54"
+          "concreteTypeId": "29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54"
         },
         {
           "name": "token_1_sub_id",
@@ -1057,8 +1051,7 @@
         }
       ],
       "name": "swap",
-
-"output": "2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d",
+      "output": "2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d",
       "attributes": [
         {
           "name": "payable",
@@ -1160,12 +1153,12 @@
     {
       "name": "LP_FEE_VOLATILE",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 62416
+      "offset": 77200
     },
     {
       "name": "LP_FEE_STABLE",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 62408
+      "offset": 77192
     }
   ]
 }

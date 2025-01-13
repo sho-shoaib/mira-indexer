@@ -5,10 +5,10 @@ networks:
   - id: 9889
     start_block: 0
     contracts:
-      - name: Mira
+      - name: Diesel
         address:
-          - 0x51bb9bf2f9df6c3af3a52ca0bad250ce12df40f27f8ea542403230bfda987526
-        abi_file_path: abis/mainnet/mira-abi.json
+          - 0x35c869e31e29f1e659990a4f02a0a2cf9d3ee6c4e6a4ce9ed8a4f589daa125c6
+        abi_file_path: abis/mainnet/diesel-abi.json
         handler: src/EventHandlers.ts
         events:
           - name: MintEvent

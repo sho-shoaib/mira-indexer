@@ -2,9 +2,9 @@
  * Please refer to https://docs.envio.dev for a thorough guide on all Envio indexer features
  */
 import {
-  Mira,
-  Mira_type2 as PoolId,
-  Mira_type8 as Identity,
+  Diesel,
+  Diesel_type2 as PoolId,
+  Diesel_type8 as Identity,
   handlerContext as Context,
   Transaction,
   Pool,
@@ -393,7 +393,7 @@ async function calculatePoolTVL(
   return { tvl, tvlUSD: 0 };
 }
 
-Mira.CreatePoolEvent.handler(async ({ event, context }) => {
+Diesel.CreatePoolEvent.handler(async ({ event, context }) => {
   // Save a raw event
   const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`;
   const rawEvent = {
@@ -457,7 +457,7 @@ Mira.CreatePoolEvent.handler(async ({ event, context }) => {
   context.Asset.set(Asset1);
 });
 
-Mira.MintEvent.handler(async ({ event, context }) => {
+Diesel.MintEvent.handler(async ({ event, context }) => {
   // Save a raw event
   const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`;
   const rawEvent = {
@@ -537,7 +537,7 @@ Mira.MintEvent.handler(async ({ event, context }) => {
   await upsertTransaction(context, transaction);
 });
 
-Mira.BurnEvent.handler(async ({ event, context }) => {
+Diesel.BurnEvent.handler(async ({ event, context }) => {
   // Save a raw event
   const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`;
   const rawEvent = {
@@ -677,7 +677,7 @@ const setExchangeRate = async (
   }
 };
 
-Mira.SwapEvent.handler(async ({ event, context }) => {
+Diesel.SwapEvent.handler(async ({ event, context }) => {
   const id = `${event.logIndex}_${event.transaction.id}_${event.block.height}`;
   const rawEvent = {
     id: id,
