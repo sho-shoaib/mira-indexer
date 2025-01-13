@@ -582,6 +582,8 @@ Mira.BurnEvent.handler(async ({ event, context }) => {
     new_reserve_1
   );
 
+  console.log(poolId, tvlUSD);
+
   context.Pool.set({
     id: poolId,
     asset_0: event.params.pool_id[0].bits,
