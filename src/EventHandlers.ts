@@ -695,7 +695,7 @@ Diesel.SwapEvent.handler(async ({ event, context }) => {
   context.RawSwapEvent.set(rawEvent);
 
   context.log.info(
-    `Handling SwapEvent for transaction ID: ${event.transaction.id}`
+    `Handling SwapEventfortransaction ID: ${event.transaction.id}`
   );
 
   if (await shouldReturnEarlyDueToDuplicate(id, context)) {
